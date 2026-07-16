@@ -1,0 +1,46 @@
+name: Publicar sitio en GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Reconstruir y verificar el sitio
+        shell: bash
+        run: |
+          mkdir -p _site
+          cat .site-parts/site.zip.part-* > /tmp/site.zip
+          unzip -tq /tmp/site.zip
+          unzip -q /tmp/site.zip -d _site
+          test -f _site/index.html
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar archivos para Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
