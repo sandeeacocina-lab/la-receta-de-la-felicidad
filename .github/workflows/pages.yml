@@ -30,7 +30,28 @@ jobs:
           mkdir -p _site
           cat .site-parts/site.zip.part-* > /tmp/site.zip
           unzip -tq /tmp/site.zip
-          unzip -q /tmp/site.zip -d _site
+          python - <<'PY'
+          import pathlib
+          import shutil
+          import zipfile
+
+          destination = pathlib.Path("_site")
+          with zipfile.ZipFile("/tmp/site.zip") as archive:
+              for item in archive.infolist():
+                  name = item.filename.replace("\\", "/")
+                  if not name:
+                      continue
+                  relative = pathlib.PurePosixPath(name)
+                  if relative.is_absolute() or ".." in relative.parts:
+                      raise ValueError(f"Ruta no válida: {name}")
+                  target = destination.joinpath(*relative.parts)
+                  if name.endswith("/"):
+                      target.mkdir(parents=True, exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with archive.open(item) as source, target.open("wb") as output:
+                          shutil.copyfileobj(source, output)
+          PY
           test -f _site/index.html
 
       - name: Configurar GitHub Pages
