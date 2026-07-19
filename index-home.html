@@ -397,10 +397,10 @@ a:hover { color: #4a4a4a; text-decoration: underline; }
         </div>
         <div style="max-width: 680px; margin: 22px auto 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 19px; line-height: 1.55; color: #6b6558; text-align: center;">{{ otherSitesIntro }}</div>
 
-        <div style="margin-top: 42px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 26px;">
+        <div style="margin-top: 42px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px;">
           <sc-for list="{{ otherSiteCards }}" as="site" hint-placeholder-count="4">
-            <a href="{{ site.url }}" target="_blank" rel="noopener noreferrer" style="background: #faf9f6; border: 1px solid #e8e6de; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; color: inherit;" style-hover="background: #f2efe8; text-decoration: none; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(73,65,52,0.10);">
-              <div role="img" aria-label="{{ site.title }}" style="width: 160px; aspect-ratio: 3 / 4; border: 4px solid #ffffff; box-shadow: 0 3px 12px rgba(0,0,0,0.15); background-size: cover; background-position: {{ site.imagePos }}; background-image: {{ site.imageBg }};"></div>
+            <a href="{{ site.url }}" target="_blank" rel="noopener noreferrer" style="box-sizing: border-box; min-width: 0; background: #faf9f6; border: 1px solid #e8e6de; padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; color: inherit;" style-hover="background: #f2efe8; text-decoration: none; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(73,65,52,0.10);">
+              <div role="img" aria-label="{{ site.title }}" style="width: 100%; max-width: 440px; aspect-ratio: 1 / 1; border: 4px solid #ffffff; box-sizing: border-box; box-shadow: 0 3px 12px rgba(0,0,0,0.15); background-size: cover; background-position: center; background-image: {{ site.imageBg }};"></div>
               <div style="font-family: 'Josefin Sans', sans-serif; font-weight: 400; font-size: 16px; letter-spacing: 0.13em; text-transform: uppercase; color: #4a4a4a; line-height: 1.45;">{{ site.title }}</div>
               <div style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: #7c766c; line-height: 1.5;">{{ site.description }}</div>
               <span style="margin-top: auto; font-family: 'Josefin Sans', sans-serif; font-size: 11.5px; letter-spacing: 0.15em; text-transform: uppercase; color: #f0ede6; background: #4d3f35; padding: 10px 17px 8px;">{{ visitSite }}</span>
@@ -920,29 +920,25 @@ class Component extends DCLogic {
         {
           title: 'sandramangas.com',
           url: 'https://sandramangas.com/',
-          imageBg: 'url("wp-content/uploads/2011/06/IMG_0674peqbn.jpg")',
-          imagePos: 'center top',
+          imageBg: 'url("wp-content/uploads/2026/07/mis-otras-webs-sandra-mangas.webp")',
           description: es ? 'Mi web profesional sobre educaci\u00f3n, innovaci\u00f3n e inteligencia artificial.' : 'My professional website about education, innovation and artificial intelligence.',
         },
         {
           title: 'Happy Cupcakes',
           url: 'https://happycupcakes.lovable.app/',
-          imageBg: 'url("wp-content/uploads/2014/05/21147062013Grandes.jpg")',
-          imagePos: 'center',
+          imageBg: 'url("wp-content/uploads/2026/07/mis-otras-webs-happy-cupcakes.webp")',
           description: es ? 'Un libro interactivo para cocinar y divertirse con los m\u00e1s peque\u00f1os.' : 'An interactive book for cooking and having fun with children.',
         },
         {
           title: 'Polos y helados',
           url: 'https://polosyhelados.lovable.app/',
-          imageBg: 'url("wp-content/uploads/2014/05/81rBvAwEbvL._SL1500_.jpg")',
-          imagePos: 'center',
+          imageBg: 'url("wp-content/uploads/2026/07/mis-otras-webs-polos-helados.webp")',
           description: es ? 'Recetas e ideas para disfrutar de polos y helados caseros durante todo el a\u00f1o.' : 'Recipes and ideas for enjoying homemade ice pops and ice cream all year round.',
         },
         {
           title: es ? 'Con la comida s\u00ed se juega' : 'Playing with food is allowed',
           url: 'https://conlacomidasisejuega.lovable.app/es',
-          imageBg: 'url("wp-content/uploads/2014/05/71S1jIMSjFL.jpg")',
-          imagePos: 'center',
+          imageBg: 'url("wp-content/uploads/2026/07/mis-otras-webs-con-la-comida.webp")',
           description: es ? 'Recetas divertidas para que los ni\u00f1os aprendan a cocinar y disfruten en familia.' : 'Fun recipes for children to learn cooking and enjoy it with the family.',
         },
       ],
