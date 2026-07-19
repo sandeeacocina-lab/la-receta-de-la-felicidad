@@ -201,21 +201,21 @@ a:hover { color: #4a4a4a; text-decoration: underline; }
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 22px;">
           <sc-for list="{{ tiles }}" as="tile" hint-placeholder-count="8">
             <sc-if value="{{ tile.isPhoto }}" hint-placeholder-val="{{ true }}">
-              <div onClick="{{ tile.open }}" class="rtile" style="cursor: pointer; position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #efede7;">
+              <a href="{{ tile.href }}" class="rtile" style="cursor: pointer; position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #efede7; color: inherit; text-decoration: none;">
                 <div role="img" aria-label="{{ tile.title }}" style="width: 100%; height: 100%; background-position: {{ tile.bgPos }}; background-size: cover; background-repeat: no-repeat; background-image: {{ tile.bg }};"></div>
                 <div class="rov" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 26px; background: #f7f6f1; text-align: center;">
                   <span style="font-family: 'Josefin Sans', sans-serif; font-weight: 400; font-size: 16px; letter-spacing: 0.18em; text-transform: uppercase; color: #8a5f52; line-height: 1.6;">{{ tile.title }}</span>
                   <span style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14.5px; line-height: 1.5; color: #8b857c; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{{ tile.excerpt }}</span>
                   <span class="brush-sm" style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: #6b6558; padding: 7px 24px 5px;">{{ tile.more }}</span>
                 </div>
-              </div>
+              </a>
             </sc-if>
             <sc-if value="{{ tile.isText }}" hint-placeholder-val="{{ false }}">
-              <div style="aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 26px; box-sizing: border-box; gap: 16px;">
-                <div onClick="{{ tile.open }}" style="cursor: pointer; font-family: 'Josefin Sans', sans-serif; font-weight: 400; font-size: 17px; letter-spacing: 0.14em; text-transform: uppercase; color: #8a5f52; line-height: 1.5;">{{ tile.title }}</div>
+              <a href="{{ tile.href }}" style="aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 26px; box-sizing: border-box; gap: 16px; color: inherit; text-decoration: none;">
+                <div style="font-family: 'Josefin Sans', sans-serif; font-weight: 400; font-size: 17px; letter-spacing: 0.14em; text-transform: uppercase; color: #8a5f52; line-height: 1.5;">{{ tile.title }}</div>
                 <div style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15.5px; line-height: 1.55; color: #8b857c;">{{ tile.excerpt }}</div>
-                <div onClick="{{ tile.open }}" class="brush-sm" style="cursor: pointer; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: #6b6558; padding: 8px 26px 6px;">{{ tile.more }}</div>
-              </div>
+                <div class="brush-sm" style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: #6b6558; padding: 8px 26px 6px;">{{ tile.more }}</div>
+              </a>
             </sc-if>
           </sc-for>
         </div>
@@ -251,20 +251,20 @@ a:hover { color: #4a4a4a; text-decoration: underline; }
         <div style="margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 22px;">
           <sc-for list="{{ archTiles }}" as="tile" hint-placeholder-count="8">
             <sc-if value="{{ tile.isPhoto }}" hint-placeholder-val="{{ true }}">
-              <div onClick="{{ tile.open }}" class="tile-ph">
+              <a href="{{ tile.href }}" class="tile-ph" style="display: block; color: inherit; text-decoration: none;">
                 <div role="img" aria-label="{{ tile.title }}" class="tile-img" style="background-image: {{ tile.bg }};"></div>
                 <div class="tile-ov">
                   <span style="font-family: 'Josefin Sans', sans-serif; font-weight: 400; font-size: 16px; letter-spacing: 0.18em; text-transform: uppercase; color: #8a5f52; line-height: 1.6;">{{ tile.title }}</span>
                   <span style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14.5px; line-height: 1.5; color: #8b857c; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{{ tile.excerpt }}</span>
                   <span class="brush-sm" style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: #6b6558; padding: 7px 24px 5px;">{{ tile.more }}</span>
                 </div>
-              </div>
+              </a>
             </sc-if>
             <sc-if value="{{ tile.isText }}" hint-placeholder-val="{{ false }}">
-              <div onClick="{{ tile.open }}" style="cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 26px; box-sizing: border-box; gap: 14px; background: #f6f4ef;">
+              <a href="{{ tile.href }}" style="cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 26px; box-sizing: border-box; gap: 14px; background: #f6f4ef; color: inherit; text-decoration: none;">
                 <div style="font-family: 'Josefin Sans', sans-serif; font-weight: 400; font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; color: #8a5f52; line-height: 1.5;">{{ tile.title }}</div>
                 <div style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14.5px; color: #9a938a;">{{ tile.dateLabel }}</div>
-              </div>
+              </a>
             </sc-if>
           </sc-for>
         </div>
@@ -305,13 +305,13 @@ a:hover { color: #4a4a4a; text-decoration: underline; }
         <!-- Prev / next -->
         <div style="margin-top: 66px; border-top: 1px solid #e8e6de; border-bottom: 1px solid #e8e6de; display: grid; grid-template-columns: 1fr 1fr;">
           <sc-if value="{{ hasPrev }}" hint-placeholder-val="{{ false }}">
-            <a href="#" onClick="{{ prevOpen }}" style="padding: 26px 24px; border-right: 1px solid #e8e6de; display: block;" style-hover="background: #f6f4ef; text-decoration: none;">
+            <a href="{{ prevHref }}" style="padding: 26px 24px; border-right: 1px solid #e8e6de; display: block;" style-hover="background: #f6f4ef; text-decoration: none;">
               <div style="font-family: 'Josefin Sans', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #9b8468; margin-bottom: 8px;">&#8592; {{ prevLabel }}</div>
               <div style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #4a4a4a; line-height: 1.35;">{{ prevTitle }}</div>
             </a>
           </sc-if>
           <sc-if value="{{ hasNext }}" hint-placeholder-val="{{ false }}">
-            <a href="#" onClick="{{ nextOpen }}" style="padding: 26px 24px; grid-column: 2; text-align: right; display: block;" style-hover="background: #f6f4ef; text-decoration: none;">
+            <a href="{{ nextHref }}" style="padding: 26px 24px; grid-column: 2; text-align: right; display: block;" style-hover="background: #f6f4ef; text-decoration: none;">
               <div style="font-family: 'Josefin Sans', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #9b8468; margin-bottom: 8px;">{{ nextLabel }} &#8594;</div>
               <div style="font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #4a4a4a; line-height: 1.35;">{{ nextTitle }}</div>
             </a>
@@ -328,10 +328,10 @@ a:hover { color: #4a4a4a; text-decoration: underline; }
             </div>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;">
               <sc-for list="{{ suggested }}" as="s" hint-placeholder-count="3">
-                <div onClick="{{ s.open }}" style="cursor: pointer;">
+                <a href="{{ s.href }}" style="cursor: pointer; display: block; color: inherit; text-decoration: none;">
                   <div role="img" aria-label="{{ s.title }}" style="width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center; background-color: #efede7; background-image: {{ s.bg }};"></div>
                   <div style="margin-top: 12px; font-family: 'Cormorant Garamond', serif; font-size: 18px; color: #4a4a4a; line-height: 1.35; text-align: center;">{{ s.title }}</div>
-                </div>
+                </a>
               </sc-for>
             </div>
           </div>
@@ -622,6 +622,17 @@ class Component extends DCLogic {
     return (sp > 40 ? cut.slice(0, sp) : cut) + '\u2026';
   }
 
+  recipeHref(recipe, lang) {
+    if (!recipe) return '#';
+    const side = recipe[lang] || recipe.es || recipe.en;
+    return (side && side.link)
+      || (lang === 'en' && recipe.permalinkEn)
+      || recipe.permalink
+      || (recipe.es && recipe.es.link)
+      || (recipe.en && recipe.en.link)
+      || '#';
+  }
+
   mergedIndex() {
     const rawIdx = this.state.archIndex || [];
     const curated = this.state.recipes || [];
@@ -629,8 +640,10 @@ class Component extends DCLogic {
     const extra = curated.filter(r => !inIdx.has(r.slug)).map(r => ({
       slug: r.slug, date: r.date, img: r.img,
       cats: (r.es && r.es.cats) || [],
-      es: r.es ? { title: r.es.title, excerpt: this.cleanExcerpt(r.es) } : null,
-      en: r.en ? { title: r.en.title, excerpt: this.cleanExcerpt(r.en) } : null,
+      es: r.es ? { title: r.es.title, excerpt: this.cleanExcerpt(r.es), link: r.es.link || r.permalink } : null,
+      en: r.en ? { title: r.en.title, excerpt: this.cleanExcerpt(r.en), link: r.en.link || r.permalinkEn } : null,
+      permalink: r.permalink,
+      permalinkEn: r.permalinkEn,
     }));
     return [...extra, ...rawIdx].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   }
@@ -651,11 +664,11 @@ class Component extends DCLogic {
       hasPrev: !!older, hasNext: !!newer,
       prevTitle: older ? label(older) : '', nextTitle: newer ? label(newer) : '',
       prevLabel: es ? 'Receta anterior' : 'Previous', nextLabel: es ? 'Receta siguiente' : 'Next',
-      prevOpen: e => { if (e && e.preventDefault) e.preventDefault(); if (older) this.open(older.slug); },
-      nextOpen: e => { if (e && e.preventDefault) e.preventDefault(); if (newer) this.open(newer.slug); },
+      prevHref: older ? this.recipeHref(older, lang) : '#',
+      nextHref: newer ? this.recipeHref(newer, lang) : '#',
       hasSuggested: sugg.length > 0,
       suggestedLabel: es ? 'Otras recetas que te pueden gustar' : 'You might also like',
-      suggested: sugg.map(r => ({ title: label(r), bg: `url("${r.img}")`, open: () => this.open(r.slug) })),
+      suggested: sugg.map(r => ({ title: label(r), bg: `url("${r.img}")`, href: this.recipeHref(r, lang) })),
     };
   }
 
@@ -737,8 +750,10 @@ class Component extends DCLogic {
     const extra = curated.filter(r => !inIdx.has(r.slug)).map(r => ({
       slug: r.slug, date: r.date, img: r.img,
       cats: (r.es && r.es.cats) || [],
-      es: r.es ? { title: r.es.title, excerpt: this.cleanExcerpt(r.es) } : null,
-      en: r.en ? { title: r.en.title, excerpt: this.cleanExcerpt(r.en) } : null,
+      es: r.es ? { title: r.es.title, excerpt: this.cleanExcerpt(r.es), link: r.es.link || r.permalink } : null,
+      en: r.en ? { title: r.en.title, excerpt: this.cleanExcerpt(r.en), link: r.en.link || r.permalinkEn } : null,
+      permalink: r.permalink,
+      permalinkEn: r.permalinkEn,
     }));
     const idx = [...extra, ...rawIdx].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const filter = this.state.archFilter;
@@ -752,7 +767,7 @@ class Component extends DCLogic {
     });
     const tiles = filtered.slice(0, show).map(r => {
       const side = r[lang] || r.es || r.en;
-      const base = { title: side ? side.title : r.slug, excerpt: this.cleanExcerpt(side), more: es ? 'leer m\u00e1s' : 'read more', open: () => this.open(r.slug) };
+      const base = { title: side ? side.title : r.slug, excerpt: this.cleanExcerpt(side), more: es ? 'leer m\u00e1s' : 'read more', href: this.recipeHref(r, lang) };
       if (r.img) return { ...base, isPhoto: true, isText: false, bg: `url("${r.img}")` };
       const [y, m, d] = r.date.split('-');
       return { ...base, isText: true, isPhoto: false, dateLabel: this.fmtDate(r.date, lang) };
@@ -808,7 +823,7 @@ class Component extends DCLogic {
         title: r[lang].title,
         excerpt: this.excerpt(r[lang].html),
         more: t.more,
-        open: () => this.open(r.slug),
+        href: this.recipeHref(r, lang),
       };
       if (!r.img || broken[r.img]) {
         return { ...base, isText: true, isPhoto: false };
