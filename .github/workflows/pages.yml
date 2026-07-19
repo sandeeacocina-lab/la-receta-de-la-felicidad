@@ -59,6 +59,11 @@ jobs:
         run: |
           cp analytics.js _site/analytics.js
           cp index-home.html _site/index.html
+          mkdir -p _site/wp-content/uploads/2026/07
+          base64 --decode site-overrides/mis-otras-webs-happy-cupcakes.webp.b64 > _site/wp-content/uploads/2026/07/mis-otras-webs-happy-cupcakes.webp
+          base64 --decode site-overrides/mis-otras-webs-polos-helados.webp.b64 > _site/wp-content/uploads/2026/07/mis-otras-webs-polos-helados.webp
+          base64 --decode site-overrides/mis-otras-webs-con-la-comida.webp.b64 > _site/wp-content/uploads/2026/07/mis-otras-webs-con-la-comida.webp
+          base64 --decode site-overrides/mis-otras-webs-sandra-mangas.webp.b64 > _site/wp-content/uploads/2026/07/mis-otras-webs-sandra-mangas.webp
 
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
