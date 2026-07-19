@@ -3,7 +3,9 @@ from __future__ import annotations
 import html
 import json
 import re
+import shutil
 import sys
+import unicodedata
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -21,6 +23,39 @@ MONTHS_ES = (
     "octubre",
     "noviembre",
     "diciembre",
+)
+
+SECTION_PAGES = (
+    {
+        "path": "recetas",
+        "url": "https://larecetadelafelicidad.com/recetas/",
+        "title": "Recetas · La Receta de la Felicidad",
+        "description": "Busca y descubre todas las recetas de Sandra Mangas, incluidas las entradas históricas del blog.",
+    },
+    {
+        "path": "sobre-la-autora",
+        "url": "https://larecetadelafelicidad.com/sobre-la-autora/",
+        "title": "Sobre mí · Sandra Mangas",
+        "description": "Conoce a Sandra Mangas, autora de La Receta de la Felicidad, sus libros y su trayectoria.",
+    },
+    {
+        "path": "mis-libros",
+        "url": "https://larecetadelafelicidad.com/mis-libros/",
+        "title": "Mis libros · Sandra Mangas",
+        "description": "Descubre los libros de cocina y repostería publicados por Sandra Mangas.",
+    },
+    {
+        "path": "contacto",
+        "url": "https://larecetadelafelicidad.com/contacto/",
+        "title": "Contacto · La Receta de la Felicidad",
+        "description": "Contacta con Sandra Mangas, autora de La Receta de la Felicidad.",
+    },
+    {
+        "path": "mis-otras-webs",
+        "url": "https://larecetadelafelicidad.com/mis-otras-webs/",
+        "title": "Mis otras webs · Sandra Mangas",
+        "description": "Otros proyectos, libros interactivos y páginas web de Sandra Mangas.",
+    },
 )
 
 MOJIBAKE_MARKERS = ("Ã", "Â", "â", "ð", "ï¿½")
@@ -85,6 +120,106 @@ def text_excerpt(article: str, limit: int = 160) -> str:
 def spanish_date(value: str) -> str:
     year, month, day = (int(part) for part in value.split("-"))
     return f"{day} {MONTHS_ES[month - 1]} {year}"
+
+
+def normalize_search_text(value: object) -> str:
+    text = str(value or "")
+    text = re.sub(
+        r"<(script|style)\b[^>]*>.*?</\1>",
+        " ",
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = html.unescape(text)
+    text = "".join(
+        char
+        for char in unicodedata.normalize("NFD", text)
+        if unicodedata.category(char) != "Mn"
+    )
+    return re.sub(r"\s+", " ", text).strip().casefold()
+
+
+def build_search_index(root: Path) -> tuple[int, int]:
+    parts: dict[str, list[str]] = {}
+
+    def add_post(post: dict) -> None:
+        slug = str(post.get("slug") or "").strip()
+        if not slug:
+            return
+        values = [slug, " ".join(str(cat) for cat in post.get("cats") or [])]
+        for language in ("es", "en"):
+            side = post.get(language)
+            if side:
+                values.extend(
+                    str(side.get(field) or "")
+                    for field in ("title", "excerpt", "html")
+                )
+        parts.setdefault(slug, []).extend(values)
+
+    for batch_path in sorted((root / "archive").glob("content-*.json")):
+        for post in json.loads(batch_path.read_text(encoding="utf-8")):
+            add_post(post)
+
+    recipes_path = root / "recipes.json"
+    if recipes_path.exists():
+        for post in json.loads(recipes_path.read_text(encoding="utf-8")):
+            if str(post.get("slug") or "") not in parts:
+                add_post(post)
+
+    index = {
+        slug: normalize_search_text(" ".join(values))
+        for slug, values in parts.items()
+    }
+    target = root / "archive" / "search.json"
+    target.write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+        newline="\n",
+    )
+    return len(index), target.stat().st_size
+
+
+def create_section_pages(root: Path) -> list[str]:
+    source = (root / "index.html").read_text(encoding="utf-8")
+    created: list[str] = []
+    for page in SECTION_PAGES:
+        document = re.sub(
+            r"<title>.*?</title>",
+            f"<title>{html.escape(page['title'])}</title>",
+            source,
+            count=1,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        document = re.sub(
+            r'<meta name="description" content="[^"]*">',
+            f'<meta name="description" content="{html.escape(page["description"], quote=True)}">',
+            document,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        document = re.sub(
+            r'<link rel="canonical" href="[^"]*">',
+            f'<link rel="canonical" href="{html.escape(page["url"], quote=True)}">',
+            document,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        target = root / page["path"] / "index.html"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(document, encoding="utf-8", newline="\n")
+        created.append(target.relative_to(root).as_posix())
+    return created
+
+
+def sync_favicon(root: Path) -> bool:
+    source = Path(__file__).resolve().parent / "favicon.svg"
+    target = root / "favicon.svg"
+    if not source.exists():
+        return False
+    if source.resolve() != target.resolve():
+        shutil.copyfile(source, target)
+    return True
 
 
 def render_spanish_page(root: Path, recipe: dict) -> tuple[Path, bool]:
@@ -181,6 +316,20 @@ def add_to_sitemap(root: Path, recipes: list[dict]) -> int:
     return len(additions)
 
 
+def add_sections_to_sitemap(root: Path) -> int:
+    sitemap_path = root / "sitemap.xml"
+    sitemap = sitemap_path.read_text(encoding="utf-8")
+    additions = [
+        f'<url><loc>{html.escape(page["url"])}</loc></url>'
+        for page in SECTION_PAGES
+        if f'<loc>{page["url"]}</loc>' not in sitemap
+    ]
+    if additions:
+        sitemap = sitemap.replace("</urlset>", "".join(additions) + "</urlset>")
+        sitemap_path.write_text(sitemap, encoding="utf-8", newline="\n")
+    return len(additions)
+
+
 def main() -> None:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
     recipes = json.loads((root / "recipes.json").read_text(encoding="utf-8"))
@@ -192,12 +341,21 @@ def main() -> None:
             generated.append(target.relative_to(root).as_posix())
 
     sitemap_additions = add_to_sitemap(root, recipes)
+    section_sitemap_additions = add_sections_to_sitemap(root)
+    search_entries, search_bytes = build_search_index(root)
+    section_pages = create_section_pages(root)
+    favicon_synced = sync_favicon(root)
     print(
         json.dumps(
             {
                 "generated": generated,
                 "generated_count": len(generated),
                 "sitemap_additions": sitemap_additions,
+                "section_sitemap_additions": section_sitemap_additions,
+                "search_entries": search_entries,
+                "search_bytes": search_bytes,
+                "section_pages": section_pages,
+                "favicon_synced": favicon_synced,
             },
             ensure_ascii=False,
         )
