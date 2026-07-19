@@ -54,22 +54,11 @@ jobs:
           PY
           test -f _site/index.html
 
-      - name: Activar Analytics solo en la portada
+      - name: Personalizar la portada
         shell: bash
         run: |
           cp analytics.js _site/analytics.js
-          python - <<'PY'
-          from pathlib import Path
-
-          page = Path("_site/index.html")
-          html = page.read_text(encoding="utf-8")
-          script = '  <script defer src="/analytics.js"></script>\n'
-          if script.strip() not in html:
-              if "</head>" not in html:
-                  raise ValueError("No se encontró </head> en la portada")
-              html = html.replace("</head>", script + "</head>", 1)
-              page.write_text(html, encoding="utf-8")
-          PY
+          python customize-home.py
 
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
