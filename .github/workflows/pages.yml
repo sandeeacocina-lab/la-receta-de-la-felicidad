@@ -66,6 +66,14 @@ jobs:
           base64 --decode site-overrides/mis-otras-webs-con-la-comida.webp.b64 > _site/wp-content/uploads/2026/07/mis-otras-webs-con-la-comida.webp
           base64 --decode site-overrides/mis-otras-webs-sandra-mangas.webp.b64 > _site/wp-content/uploads/2026/07/mis-otras-webs-sandra-mangas.webp
 
+      - name: Aplicar privacidad y medición
+        shell: bash
+        run: |
+          base64 --decode site-overrides/cookie-compliance-overlay.zip.b64 > /tmp/cookie-compliance-overlay.zip
+          unzip -oq /tmp/cookie-compliance-overlay.zip -d _site
+          test -f _site/politica-de-cookies/index.html
+          test -f _site/analytics.js
+
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
