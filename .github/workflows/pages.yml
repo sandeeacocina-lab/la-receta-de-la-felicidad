@@ -74,6 +74,14 @@ jobs:
           test -f _site/politica-de-cookies/index.html
           test -f _site/analytics.js
 
+      - name: Actualizar SEO de recetas y enlaces antiguos
+        shell: bash
+        run: |
+          python3 seo_fixes.py _site
+          test -f _site/sandra-mangas/index.html
+          grep -q '"@type": "Recipe"' _site/2016/03/receta-bizcocho-marmolado.html
+          ! grep -R -q 'class="hrecipe' _site --include='*.html'
+
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
