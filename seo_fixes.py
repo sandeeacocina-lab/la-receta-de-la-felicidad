@@ -90,6 +90,7 @@ class RecipeHTMLParser(HTMLParser):
         self.description = ""
         self.canonical = ""
         self.h1_parts: list[str] = []
+        self.category_parts: list[str] = []
         self.page_images: list[tuple[int, str]] = []
         self.records: list[RecipeRecord] = []
         self.legacy = RecipeRecord()
@@ -144,6 +145,8 @@ class RecipeHTMLParser(HTMLParser):
 
             if tag == "h1":
                 self._capture(entry, self.h1_parts)
+            if tag == "div" and "cats" in classes:
+                self._capture(entry, self.category_parts)
             if "fn" in classes:
                 self._capture(entry, active.name_parts)
             if tag == "li" and "ingredient" in classes:
@@ -224,6 +227,9 @@ def best_image(record: RecipeRecord, page_images: list[tuple[int, str]], canonic
 def recipe_jsonld(parser: RecipeHTMLParser, canonical: str) -> list[dict]:
     page_name = clean_text("".join(parser.h1_parts))
     description = parser.description or page_name
+    categories = unique(
+        re.split(r"\s*[·|]\s*", clean_text("".join(parser.category_parts)))
+    )
     records = parser.records or [parser.legacy]
     result: list[dict] = []
 
@@ -250,10 +256,10 @@ def recipe_jsonld(parser: RecipeHTMLParser, canonical: str) -> list[dict]:
         if ingredients:
             recipe["recipeIngredient"] = ingredients
         if instructions:
-            recipe["recipeInstructions"] = [
-                {"@type": "HowToStep", "text": instruction}
-                for instruction in instructions
-            ]
+            recipe["recipeInstructions"] = instructions
+        if categories:
+            recipe["keywords"] = ", ".join(categories)
+            recipe["recipeCategory"] = categories
         if record.recipe_yield:
             recipe["recipeYield"] = record.recipe_yield
         if record.prep_time:
