@@ -52,7 +52,7 @@ def clean_recipe_ingredients(
             if instruction_index <= 0:
                 continue
             value = re.sub(
-                r"\s*(?:PreparaciÃ³n|Preparation|Directions)\s*$",
+                r"\s*(?:Preparación|Preparation|Directions)\s*$",
                 "",
                 value[:instruction_index],
                 flags=re.IGNORECASE,
@@ -63,7 +63,7 @@ def clean_recipe_ingredients(
             continue
         if len(value) > MAX_RECIPE_INGREDIENT_LENGTH:
             raise ValueError(
-                "Ingrediente demasiado largo despuÃ©s de limpiar el contenido: "
+                "Ingrediente demasiado largo después de limpiar el contenido: "
                 f"{value[:120]!r}"
             )
         result.append(value)
@@ -259,7 +259,7 @@ def recipe_jsonld(parser: RecipeHTMLParser, canonical: str) -> list[dict]:
     page_name = clean_text("".join(parser.h1_parts))
     description = parser.description or page_name
     categories = unique(
-        re.split(r"\s*[Â·|]\s*", clean_text("".join(parser.category_parts)))
+        re.split(r"\s*[·|]\s*", clean_text("".join(parser.category_parts)))
     )
     records = parser.records or [parser.legacy]
     result: list[dict] = []
@@ -338,7 +338,7 @@ def update_recipe_page(path: Path, site_root: Path) -> tuple[bool, int]:
             flags=re.IGNORECASE,
         )
         if replacements != 1:
-            raise ValueError(f"No se encontrÃ³ </head> en {path}")
+            raise ValueError(f"No se encontró </head> en {path}")
 
     if document != original:
         path.write_text(document, encoding="utf-8", newline="\n")
@@ -353,13 +353,13 @@ def write_author_redirect(site_root: Path) -> Path:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sandra Mangas Â· La Receta de la Felicidad</title>
+<title>Sandra Mangas · La Receta de la Felicidad</title>
 <link rel="canonical" href="{target}">
 <meta http-equiv="refresh" content="0; url={target}">
 <script>window.location.replace({json.dumps(target)});</script>
 </head>
 <body>
-<p>Esta pÃ¡gina se ha trasladado a <a href="{target}">Sobre la autora</a>.</p>
+<p>Esta página se ha trasladado a <a href="{target}">Sobre la autora</a>.</p>
 </body>
 </html>
 '''
@@ -375,7 +375,7 @@ def main() -> int:
     args = argument_parser.parse_args()
     site_root = args.site_root.resolve()
     if not (site_root / "index.html").is_file():
-        raise SystemExit(f"No parece un sitio vÃ¡lido: {site_root}")
+        raise SystemExit(f"No parece un sitio válido: {site_root}")
 
     changed = 0
     recipe_items = 0
@@ -385,15 +385,14 @@ def main() -> int:
         recipe_items += item_count
     redirect = write_author_redirect(site_root)
     print(
-        f"SEO preparado: {changed} pÃ¡ginas actualizadas, "
-        f"{recipe_items} recetas modernas y redirecciÃ³n {redirect.relative_to(site_root)}"
+        f"SEO preparado: {changed} páginas actualizadas, "
+        f"{recipe_items} recetas modernas y redirección {redirect.relative_to(site_root)}"
     )
     if recipe_items == 0:
-        raise SystemExit("No se generÃ³ ningÃºn dato estructurado de receta")
+        raise SystemExit("No se generó ningún dato estructurado de receta")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
 
