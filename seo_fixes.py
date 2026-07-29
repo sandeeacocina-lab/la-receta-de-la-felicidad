@@ -23,6 +23,41 @@ JSONLD_RE = re.compile(
 )
 CLASS_RE = re.compile(r"\sclass=(['\"])(.*?)\1", re.IGNORECASE | re.DOTALL)
 MAX_RECIPE_INGREDIENT_LENGTH = 1000
+DYNAMIC_LINK_MARKER = "data-dynamic-link-helper"
+DYNAMIC_HREF_RE = re.compile(
+    r'href=(?P<quote>["\'])(?P<value>\{\{\s*[^{}]+?\s*\}\})(?P=quote)',
+    re.IGNORECASE,
+)
+DYNAMIC_LINK_HELPER = f"""<script {DYNAMIC_LINK_MARKER}>
+(function () {{
+  function syncDynamicLinks(root) {{
+    var links = [];
+    if (root.matches && root.matches('a[data-dynamic-href]')) links.push(root);
+    if (root.querySelectorAll) {{
+      links = links.concat(Array.prototype.slice.call(root.querySelectorAll('a[data-dynamic-href]')));
+    }}
+    links.forEach(function (link) {{
+      var href = link.getAttribute('data-dynamic-href');
+      if (href && href.indexOf('{{{{') === -1) link.setAttribute('href', href);
+    }});
+  }}
+
+  syncDynamicLinks(document);
+  new MutationObserver(function (records) {{
+    records.forEach(function (record) {{
+      if (record.type === 'attributes') syncDynamicLinks(record.target);
+      Array.prototype.forEach.call(record.addedNodes || [], function (node) {{
+        if (node.nodeType === 1) syncDynamicLinks(node);
+      }});
+    }});
+  }}).observe(document.documentElement, {{
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ['data-dynamic-href']
+  }});
+}})();
+</script>"""
 
 
 def clean_text(value: str) -> str:
@@ -346,6 +381,34 @@ def update_recipe_page(path: Path, site_root: Path) -> tuple[bool, int]:
     return False, len(recipes)
 
 
+
+def protect_dynamic_links(path: Path) -> tuple[bool, int]:
+    original = path.read_text(encoding="utf-8")
+    document, replacements = DYNAMIC_HREF_RE.subn(
+        lambda match: (
+            f'href="#" data-dynamic-href='
+            f'{match.group("quote")}{match.group("value")}{match.group("quote")}'
+        ),
+        original,
+    )
+    has_dynamic_links = 'data-dynamic-href="' in document or "data-dynamic-href='" in document
+    if has_dynamic_links and DYNAMIC_LINK_MARKER not in document:
+        document, body_replacements = re.subn(
+            r"\s*</body>",
+            "\n" + DYNAMIC_LINK_HELPER + "\n</body>",
+            document,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        if body_replacements != 1:
+            raise ValueError(f"No se encontró </body> en {path}")
+
+    if document != original:
+        path.write_text(document, encoding="utf-8", newline="\n")
+        return True, replacements
+    return False, replacements
+
+
 def write_author_redirect(site_root: Path) -> Path:
     target = AUTHOR_URL
     redirect = f'''<!doctype html>
@@ -378,15 +441,22 @@ def main() -> int:
         raise SystemExit(f"No parece un sitio válido: {site_root}")
 
     changed = 0
+    dynamic_pages = 0
+    dynamic_links = 0
     recipe_items = 0
     for path in sorted(site_root.rglob("*.html")):
+        dynamic_changed, dynamic_count = protect_dynamic_links(path)
+        dynamic_pages += int(dynamic_changed)
+        dynamic_links += dynamic_count
         was_changed, item_count = update_recipe_page(path, site_root)
-        changed += int(was_changed)
+        changed += int(dynamic_changed or was_changed)
         recipe_items += item_count
     redirect = write_author_redirect(site_root)
     print(
         f"SEO preparado: {changed} páginas actualizadas, "
-        f"{recipe_items} recetas modernas y redirección {redirect.relative_to(site_root)}"
+        f"{recipe_items} recetas modernas, {dynamic_links} enlaces dinámicos "
+        f"protegidos en {dynamic_pages} páginas y redirección "
+        f"{redirect.relative_to(site_root)}"
     )
     if recipe_items == 0:
         raise SystemExit("No se generó ningún dato estructurado de receta")
