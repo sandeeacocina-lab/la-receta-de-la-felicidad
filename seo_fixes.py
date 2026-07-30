@@ -25,9 +25,41 @@ CLASS_RE = re.compile(r"\sclass=(['\"])(.*?)\1", re.IGNORECASE | re.DOTALL)
 MAX_RECIPE_INGREDIENT_LENGTH = 1000
 DYNAMIC_LINK_MARKER = "data-dynamic-link-helper"
 DYNAMIC_HREF_RE = re.compile(
-    r'href=(?P<quote>["\'])(?P<value>\{\{\s*[^{}]+?\s*\}\})(?P=quote)',
+    r'(?<![\w-])href=(?P<quote>["\'])(?P<value>\{\{\s*[^{}]+?\s*\}\})(?P=quote)',
     re.IGNORECASE,
 )
+CANONICAL_LINK_RE = re.compile(
+    r"""<link\b(?=[^>]*\brel\s*=\s*["'][^"']*\bcanonical\b[^"']*["'])[^>]*>""",
+    re.IGNORECASE,
+)
+LEGACY_REDIRECTS = {
+    "en/2012/09/cheese-mini-donuts.html":
+        "en/2012/05/cheese-donuts-breakfast-bars.html",
+    "2009/06/charlotte-de-ensalada-de-canonigos-y.html":
+        "2009/06/charlotte-de-ensalada-de-canonigos-y-gulas.html",
+    "2013/10/tarta-de-chocolate-sencilla-sin-huevos-ni-lacteos.html":
+        "2013/10/tarta-de-chocolate-sin-huevos-ni-lacteos.html",
+    "2008/11/ny-cheesecake-de-frambuesa.html":
+        "2008/11/new-york-cheesecake.html",
+    "en/2012/10/chocolate-spoons.html":
+        "en/2012/05/hot-chocolate-spoons.html",
+    "en/2012/05/lattice-pie-crust-cookie.html":
+        "en/2012/05/Lattice-Pie-Crust-Cookie.html",
+    "2011/10/bizocho-chocolate-patata.html":
+        "2011/10/bizcocho-chocolate-patata.html",
+    "2011/04/gominolas-100-fruta.html":
+        "2011/04/golosinas-fruta.html",
+    "2013/09/mi-libro-las-recetas-de-la-felicidad.html":
+        "mis-libros/",
+    "2012/05/pinata-cupcakes.html":
+        "2012/05/pinata-cupcakes-2.html",
+    "en/2012/10/homemade-mikado-sticks.html":
+        "en/2012/05/homemade-mikado-and-autumn-pizza.html",
+    "2015/02/galletas-de-aceite-y-concurso-de-san-valentin.html":
+        "2015/02/galletas-de-aceite.html",
+    "2011/05/no-come-huevos-cookies-de-huevo-cocido.html":
+        "2011/05/cookies-chips-chocolate-huevo-cocido.html",
+}
 DYNAMIC_LINK_HELPER = f"""<script {DYNAMIC_LINK_MARKER}>
 (function () {{
   function syncDynamicLinks(root) {{
@@ -381,7 +413,6 @@ def update_recipe_page(path: Path, site_root: Path) -> tuple[bool, int]:
     return False, len(recipes)
 
 
-
 def protect_dynamic_links(path: Path) -> tuple[bool, int]:
     original = path.read_text(encoding="utf-8")
     document, replacements = DYNAMIC_HREF_RE.subn(
@@ -409,27 +440,62 @@ def protect_dynamic_links(path: Path) -> tuple[bool, int]:
     return False, replacements
 
 
-def write_author_redirect(site_root: Path) -> Path:
-    target = AUTHOR_URL
+def ensure_page_canonical(path: Path, site_root: Path) -> bool:
+    original = path.read_text(encoding="utf-8")
+    if CANONICAL_LINK_RE.search(original):
+        return False
+
+    canonical = canonical_for(path, site_root)
+    addition = f'\n<link rel="canonical" href="{html.escape(canonical, quote=True)}">\n'
+    document, replacements = re.subn(
+        r"\s*</head>",
+        addition + "</head>",
+        original,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    if replacements != 1:
+        raise ValueError(f"No se encontró </head> en {path}")
+    path.write_text(document, encoding="utf-8", newline="\n")
+    return True
+
+
+def write_redirect_page(path: Path, target: str, language: str = "es") -> Path:
     redirect = f'''<!doctype html>
-<html lang="es">
+<html lang="{language}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sandra Mangas · La Receta de la Felicidad</title>
-<link rel="canonical" href="{target}">
-<meta http-equiv="refresh" content="0; url={target}">
+<title>Página trasladada · La Receta de la Felicidad</title>
+<link rel="canonical" href="{html.escape(target, quote=True)}">
+<meta http-equiv="refresh" content="0; url={html.escape(target, quote=True)}">
 <script>window.location.replace({json.dumps(target)});</script>
 </head>
 <body>
-<p>Esta página se ha trasladado a <a href="{target}">Sobre la autora</a>.</p>
+<p>Esta página se ha trasladado a <a href="{html.escape(target, quote=True)}">su dirección actual</a>.</p>
 </body>
 </html>
 '''
-    path = site_root / "sandra-mangas" / "index.html"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(redirect, encoding="utf-8", newline="\n")
     return path
+
+
+def write_author_redirect(site_root: Path) -> Path:
+    target = AUTHOR_URL
+    path = site_root / "sandra-mangas" / "index.html"
+    return write_redirect_page(path, target)
+
+
+def write_legacy_redirects(site_root: Path) -> list[Path]:
+    written: list[Path] = []
+    for old_relative, new_relative in LEGACY_REDIRECTS.items():
+        target = urljoin(SITE_URL, new_relative)
+        language = "en" if old_relative.startswith("en/") else "es"
+        written.append(
+            write_redirect_page(site_root.joinpath(*old_relative.split("/")), target, language)
+        )
+    return written
 
 
 def main() -> int:
@@ -443,20 +509,25 @@ def main() -> int:
     changed = 0
     dynamic_pages = 0
     dynamic_links = 0
+    canonical_pages = 0
     recipe_items = 0
     for path in sorted(site_root.rglob("*.html")):
         dynamic_changed, dynamic_count = protect_dynamic_links(path)
         dynamic_pages += int(dynamic_changed)
         dynamic_links += dynamic_count
         was_changed, item_count = update_recipe_page(path, site_root)
-        changed += int(dynamic_changed or was_changed)
+        canonical_changed = ensure_page_canonical(path, site_root)
+        canonical_pages += int(canonical_changed)
+        changed += int(dynamic_changed or was_changed or canonical_changed)
         recipe_items += item_count
     redirect = write_author_redirect(site_root)
+    legacy_redirects = write_legacy_redirects(site_root)
     print(
         f"SEO preparado: {changed} páginas actualizadas, "
-        f"{recipe_items} recetas modernas, {dynamic_links} enlaces dinámicos "
-        f"protegidos en {dynamic_pages} páginas y redirección "
-        f"{redirect.relative_to(site_root)}"
+        f"{recipe_items} recetas modernas, {canonical_pages} canónicas añadidas, "
+        f"{dynamic_links} enlaces dinámicos protegidos en {dynamic_pages} páginas, "
+        f"redirección {redirect.relative_to(site_root)} y "
+        f"{len(legacy_redirects)} redirecciones históricas"
     )
     if recipe_items == 0:
         raise SystemExit("No se generó ningún dato estructurado de receta")
@@ -465,4 +536,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
