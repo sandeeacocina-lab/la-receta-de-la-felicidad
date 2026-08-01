@@ -96,6 +96,26 @@ def clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(value)).strip()
 
 
+ISO_8601_DURATION_RE = re.compile(
+    r"^P(?=.*\d)(?:\d+Y)?(?:\d+M)?(?:\d+W)?(?:\d+D)?"
+    r"(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$"
+)
+
+
+def normalize_duration(value: str | None) -> str | None:
+    """Return a Google-compatible ISO 8601 duration or omit invalid legacy data."""
+    duration = clean_text(value or "").upper().replace(" ", "")
+    if not duration:
+        return None
+
+    # Some old hRecipe entries omitted the final minute designator. For
+    # example, PT0H15 means 15 minutes and must be written PT0H15M.
+    if re.fullmatch(r"PT\d+H\d+", duration) or re.fullmatch(r"PT\d+", duration):
+        duration += "M"
+
+    return duration if ISO_8601_DURATION_RE.fullmatch(duration) else None
+
+
 def unique(values: list[str]) -> list[str]:
     seen: set[str] = set()
     result: list[str] = []
@@ -360,10 +380,12 @@ def recipe_jsonld(parser: RecipeHTMLParser, canonical: str) -> list[dict]:
             recipe["recipeCategory"] = categories
         if record.recipe_yield:
             recipe["recipeYield"] = record.recipe_yield
-        if record.prep_time:
-            recipe["prepTime"] = record.prep_time
-        if record.cook_time:
-            recipe["cookTime"] = record.cook_time
+        prep_time = normalize_duration(record.prep_time)
+        cook_time = normalize_duration(record.cook_time)
+        if prep_time:
+            recipe["prepTime"] = prep_time
+        if cook_time:
+            recipe["cookTime"] = cook_time
         result.append(recipe)
     return result
 
