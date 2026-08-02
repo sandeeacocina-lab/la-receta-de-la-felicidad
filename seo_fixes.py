@@ -23,6 +23,16 @@ JSONLD_RE = re.compile(
 )
 CLASS_RE = re.compile(r"\sclass=(['\"])(.*?)\1", re.IGNORECASE | re.DOTALL)
 MAX_RECIPE_INGREDIENT_LENGTH = 1000
+BROKEN_INLINE_BRIDGE_RE = re.compile(
+    r"(?P<before>.)</p>\s*"
+    r"(?P<inline><(?P<tag>a|strong|b|em|i|span)\b[^>]*>.*?</(?P=tag)>)"
+    r"\s*<p>(?P<after>.)",
+    re.IGNORECASE | re.DOTALL,
+)
+ORPHAN_CAPTION_RE = re.compile(
+    r"\s*\[/?caption(?:\s+[^\]]*)?\]",
+    re.IGNORECASE,
+)
 DYNAMIC_LINK_MARKER = "data-dynamic-link-helper"
 DYNAMIC_HREF_RE = re.compile(
     r'(?<![\w-])href=(?P<quote>["\'])(?P<value>\{\{\s*[^{}]+?\s*\}\})(?P=quote)',
@@ -331,6 +341,40 @@ def remove_hrecipe_class(document: str) -> str:
     return CLASS_RE.sub(replace, document)
 
 
+def repair_migrated_content(path: Path) -> tuple[bool, int]:
+    """Join inline markup split into fake paragraphs by the WordPress export."""
+    original = path.read_text(encoding="utf-8")
+    document = original
+    repairs = 0
+
+    def join_inline(match: re.Match[str]) -> str:
+        before = match.group("before")
+        after = match.group("after")
+        space_before = "" if before.isspace() or before in "(¡¿[/" else " "
+        space_after = "" if after.isspace() or after in ".,;:!?)]}" else " "
+        return (
+            before
+            + space_before
+            + match.group("inline")
+            + space_after
+            + after
+        )
+
+    while True:
+        document, count = BROKEN_INLINE_BRIDGE_RE.subn(join_inline, document)
+        repairs += count
+        if count == 0:
+            break
+
+    document, caption_repairs = ORPHAN_CAPTION_RE.subn("", document)
+    repairs += caption_repairs
+    if document == original:
+        return False, 0
+
+    path.write_text(document, encoding="utf-8", newline="\n")
+    return True, repairs
+
+
 def best_image(record: RecipeRecord, page_images: list[tuple[int, str]], canonical: str) -> str:
     candidates = record.images or page_images
     if not candidates:
@@ -531,22 +575,30 @@ def main() -> int:
     changed = 0
     dynamic_pages = 0
     dynamic_links = 0
+    repaired_pages = 0
+    content_repairs = 0
     canonical_pages = 0
     recipe_items = 0
     for path in sorted(site_root.rglob("*.html")):
+        repair_changed, repair_count = repair_migrated_content(path)
+        repaired_pages += int(repair_changed)
+        content_repairs += repair_count
         dynamic_changed, dynamic_count = protect_dynamic_links(path)
         dynamic_pages += int(dynamic_changed)
         dynamic_links += dynamic_count
         was_changed, item_count = update_recipe_page(path, site_root)
         canonical_changed = ensure_page_canonical(path, site_root)
         canonical_pages += int(canonical_changed)
-        changed += int(dynamic_changed or was_changed or canonical_changed)
+        changed += int(
+            repair_changed or dynamic_changed or was_changed or canonical_changed
+        )
         recipe_items += item_count
     redirect = write_author_redirect(site_root)
     legacy_redirects = write_legacy_redirects(site_root)
     print(
         f"SEO preparado: {changed} páginas actualizadas, "
         f"{recipe_items} recetas modernas, {canonical_pages} canónicas añadidas, "
+        f"{content_repairs} fragmentos reparados en {repaired_pages} páginas, "
         f"{dynamic_links} enlaces dinámicos protegidos en {dynamic_pages} páginas, "
         f"redirección {redirect.relative_to(site_root)} y "
         f"{len(legacy_redirects)} redirecciones históricas"
