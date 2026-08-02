@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlparse
 
 
 SITE_URL = "https://larecetadelafelicidad.com/"
@@ -29,6 +29,9 @@ BROKEN_INLINE_BRIDGE_RE = re.compile(
     r"\s*<p>(?P<after>.)",
     re.IGNORECASE | re.DOTALL,
 )
+REVIEW_ASSET_MARKER = "data-recipe-reviews-assets"
+REVIEWS_START = "<!-- recipe-reviews:start -->"
+REVIEWS_END = "<!-- recipe-reviews:end -->"
 ORPHAN_CAPTION_RE = re.compile(
     r"\s*\[/?caption(?:\s+[^\]]*)?\]",
     re.IGNORECASE,
@@ -330,6 +333,69 @@ def canonical_for(path: Path, site_root: Path) -> str:
     return urljoin(SITE_URL, quote(relative, safe="/%-.~"))
 
 
+def recipe_review_id(canonical: str) -> str:
+    """Build a stable Firestore-safe identifier from the recipe permalink."""
+    path = urlparse(canonical).path.strip("/").lower()
+    identifier = re.sub(r"[^a-z0-9]+", "-", path).strip("-")
+    return (identifier or "receta")[:220]
+
+
+def recipe_reviews_block(canonical: str, title: str) -> str:
+    recipe_id = recipe_review_id(canonical)
+    return f'''{REVIEWS_START}
+<section class="recipe-reviews" id="resenas"
+  data-recipe-id="{html.escape(recipe_id, quote=True)}"
+  data-recipe-title="{html.escape(title, quote=True)}"
+  data-recipe-url="{html.escape(canonical, quote=True)}">
+  <div class="recipe-reviews__heading">
+    <p class="recipe-reviews__eyebrow">Tu experiencia</p>
+    <h2>Valora esta receta</h2>
+    <p class="recipe-reviews__intro">¿La has preparado? Tu opinión puede ayudar a otras personas.</p>
+  </div>
+  <div class="recipe-reviews__summary" data-reviews-summary aria-live="polite">
+    <span class="recipe-reviews__average" data-reviews-average>—</span>
+    <span class="recipe-reviews__stars" data-reviews-stars aria-hidden="true">☆☆☆☆☆</span>
+    <span data-reviews-count>Cargando reseñas…</span>
+  </div>
+  <div class="recipe-reviews__list" data-reviews-list></div>
+  <form class="recipe-review-form" data-review-form>
+    <h3>Deja tu reseña</h3>
+    <fieldset class="recipe-review-form__rating">
+      <legend>Tu valoración</legend>
+      <div class="recipe-review-form__stars">
+        <input type="radio" id="review-star-5" name="rating" value="5" required>
+        <label for="review-star-5" title="5 estrellas">5 estrellas</label>
+        <input type="radio" id="review-star-4" name="rating" value="4">
+        <label for="review-star-4" title="4 estrellas">4 estrellas</label>
+        <input type="radio" id="review-star-3" name="rating" value="3">
+        <label for="review-star-3" title="3 estrellas">3 estrellas</label>
+        <input type="radio" id="review-star-2" name="rating" value="2">
+        <label for="review-star-2" title="2 estrellas">2 estrellas</label>
+        <input type="radio" id="review-star-1" name="rating" value="1">
+        <label for="review-star-1" title="1 estrella">1 estrella</label>
+      </div>
+    </fieldset>
+    <label class="recipe-review-form__field">
+      <span>Nombre o alias</span>
+      <input name="name" type="text" minlength="2" maxlength="80" autocomplete="nickname" required>
+    </label>
+    <label class="recipe-review-form__field">
+      <span>Cuéntanos cómo te ha quedado</span>
+      <textarea name="comment" minlength="5" maxlength="1000" rows="5" required></textarea>
+    </label>
+    <label class="recipe-review-form__honeypot" aria-hidden="true">
+      <span>No rellenes este campo</span>
+      <input name="website" type="text" tabindex="-1" autocomplete="off">
+    </label>
+    <p class="recipe-review-form__privacy">Publicaremos únicamente tu nombre o alias, la valoración y el comentario después de revisarlos. No te pedimos el correo electrónico.</p>
+    <button type="submit" class="recipe-review-form__submit">Enviar reseña</button>
+    <p class="recipe-review-form__status" data-review-status role="status" aria-live="polite"></p>
+  </form>
+  <noscript><p>Activa JavaScript para consultar o enviar reseñas.</p></noscript>
+</section>
+{REVIEWS_END}'''
+
+
 def remove_hrecipe_class(document: str) -> str:
     def replace(match: re.Match[str]) -> str:
         tokens = match.group(2).split()
@@ -460,6 +526,13 @@ def update_recipe_page(path: Path, site_root: Path) -> tuple[bool, int]:
         additions.append(
             f'{JSONLD_START}\n<script type="application/ld+json">\n{json_text}\n</script>\n{JSONLD_END}'
         )
+        if REVIEW_ASSET_MARKER not in document:
+            additions.append(
+                f'<link rel="stylesheet" href="/reviews.css" {REVIEW_ASSET_MARKER}>'
+            )
+            additions.append(
+                f'<script type="module" src="/reviews.js" {REVIEW_ASSET_MARKER}></script>'
+            )
 
     if additions:
         block = "\n" + "\n".join(additions) + "\n"
@@ -472,6 +545,21 @@ def update_recipe_page(path: Path, site_root: Path) -> tuple[bool, int]:
         )
         if replacements != 1:
             raise ValueError(f"No se encontró </head> en {path}")
+
+    if recipes and REVIEWS_START not in document:
+        reviews_block = "\n" + recipe_reviews_block(canonical, recipes[0]["name"]) + "\n"
+        for closing_tag in ("article", "main", "body"):
+            document, replacements = re.subn(
+                rf"\s*</{closing_tag}>",
+                reviews_block + f"</{closing_tag}>",
+                document,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+            if replacements == 1:
+                break
+        else:
+            raise ValueError(f"No se encontró dónde insertar reseñas en {path}")
 
     if document != original:
         path.write_text(document, encoding="utf-8", newline="\n")

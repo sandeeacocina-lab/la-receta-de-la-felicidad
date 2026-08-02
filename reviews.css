@@ -1,0 +1,257 @@
+.recipe-reviews {
+  --review-blue: #38a5c9;
+  --review-blue-dark: #176f8c;
+  --review-pink: #e85c7a;
+  --review-cream: #fffaf4;
+  --review-ink: #353535;
+  margin: 4rem auto 2rem;
+  padding: clamp(1.4rem, 4vw, 2.5rem);
+  border: 1px solid rgba(56, 165, 201, .25);
+  border-radius: 24px;
+  background: linear-gradient(145deg, #fff 0%, var(--review-cream) 100%);
+  box-shadow: 0 16px 45px rgba(41, 94, 112, .1);
+  color: var(--review-ink);
+}
+
+.recipe-reviews h2,
+.recipe-reviews h3,
+.recipe-reviews p {
+  margin-top: 0;
+}
+
+.recipe-reviews__eyebrow {
+  margin-bottom: .35rem;
+  color: var(--review-pink);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.recipe-reviews__intro {
+  color: #666;
+}
+
+.recipe-reviews__summary {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  margin: 1.5rem 0;
+  padding: 1rem 1.15rem;
+  border-radius: 16px;
+  background: #edf8fb;
+}
+
+.recipe-reviews__average {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.recipe-reviews__stars,
+.recipe-review__stars {
+  color: #f2aa1f;
+  letter-spacing: .08em;
+}
+
+.recipe-reviews__list {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.recipe-reviews__empty {
+  color: #686868;
+  font-style: italic;
+}
+
+.recipe-review {
+  padding: 1.15rem;
+  border: 1px solid #e7e7e7;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.recipe-review__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .6rem;
+}
+
+.recipe-review__date {
+  color: #777;
+  font-size: .82rem;
+}
+
+.recipe-review-form {
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(56, 165, 201, .25);
+}
+
+.recipe-review-form__rating {
+  margin: 0 0 1.1rem;
+  padding: 0;
+  border: 0;
+}
+
+.recipe-review-form__stars {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: .12rem;
+}
+
+.recipe-review-form__stars input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.recipe-review-form__stars label {
+  width: 1.8rem;
+  overflow: hidden;
+  color: #c8c8c8;
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+  text-indent: -999px;
+}
+
+.recipe-review-form__stars label::before {
+  content: "★";
+  float: left;
+  text-indent: 0;
+}
+
+.recipe-review-form__stars label:hover,
+.recipe-review-form__stars label:hover ~ label,
+.recipe-review-form__stars input:checked ~ label {
+  color: #f2aa1f;
+}
+
+.recipe-review-form__stars input:focus-visible + label {
+  outline: 3px solid rgba(56, 165, 201, .35);
+  outline-offset: 2px;
+}
+
+.recipe-review-form__field {
+  display: grid;
+  gap: .4rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.recipe-review-form__field input,
+.recipe-review-form__field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: .8rem .9rem;
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+}
+
+.recipe-review-form__field input:focus,
+.recipe-review-form__field textarea:focus {
+  border-color: var(--review-blue);
+  outline: 3px solid rgba(56, 165, 201, .16);
+}
+
+.recipe-review-form__honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.recipe-review-form__privacy {
+  color: #6a6a6a;
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.recipe-review-form__submit,
+.review-admin button {
+  padding: .75rem 1.15rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--review-blue, #38a5c9);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.recipe-review-form__submit:hover,
+.review-admin button:hover {
+  background: var(--review-blue-dark, #176f8c);
+}
+
+.recipe-review-form__submit:disabled,
+.review-admin button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.recipe-review-form__status {
+  min-height: 1.4em;
+  margin: .8rem 0 0;
+  color: var(--review-blue-dark);
+  font-weight: 600;
+}
+
+.review-admin {
+  --review-blue: #38a5c9;
+  --review-blue-dark: #176f8c;
+  box-sizing: border-box;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  color: #333;
+  font-family: Arial, sans-serif;
+}
+
+.review-admin__header {
+  margin-bottom: 2rem;
+}
+
+.review-admin__header a {
+  color: var(--review-blue-dark);
+}
+
+.review-admin__toolbar,
+.review-admin__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: center;
+}
+
+.review-admin__card {
+  margin: 1rem 0;
+  padding: 1.25rem;
+  border: 1px solid #dce6e9;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(41, 94, 112, .08);
+}
+
+.review-admin__meta {
+  color: #666;
+  font-size: .9rem;
+}
+
+.review-admin__reject {
+  background: #a64258 !important;
+}
+
+@media (max-width: 620px) {
+  .recipe-reviews__summary,
+  .recipe-review__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

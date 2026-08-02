@@ -74,12 +74,24 @@ jobs:
           test -f _site/politica-de-cookies/index.html
           test -f _site/analytics.js
 
+      - name: Instalar reseñas moderadas
+        shell: bash
+        run: |
+          cp firebase-config.js _site/firebase-config.js
+          cp reviews.js _site/reviews.js
+          cp reviews.css _site/reviews.css
+          cp admin-reviews.js _site/admin-reviews.js
+          mkdir -p _site/admin-resenas
+          cp admin-resenas/index.html _site/admin-resenas/index.html
+          test -f _site/admin-resenas/index.html
+
       - name: Actualizar SEO de recetas y enlaces antiguos
         shell: bash
         run: |
           python3 seo_fixes.py _site
           test -f _site/sandra-mangas/index.html
           grep -q '"@type": "Recipe"' _site/2016/03/receta-bizcocho-marmolado.html
+          grep -q 'data-recipe-id=' _site/2016/03/receta-bizcocho-marmolado.html
           ! grep -R -q 'class="hrecipe' _site --include='*.html'
 
       - name: Configurar GitHub Pages
