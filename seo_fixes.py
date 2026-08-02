@@ -52,8 +52,8 @@ FAVICON_LINK_RE = re.compile(
 )
 FAVICON_LINKS = """<!-- site-favicon -->
 <link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-48x48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/favicon-512x512.png" type="image/png" sizes="512x512">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">"""
 LEGACY_REDIRECTS = {
     "en/2012/09/cheese-mini-donuts.html":
