@@ -192,11 +192,11 @@ if (section) {
         name: String(fields.get("name")).trim(),
         rating: Number(fields.get("rating")),
         comment: String(fields.get("comment")).trim(),
-        status: "pending",
+        status: "approved",
         createdAt: serverTimestamp()
       });
       form.reset();
-      formStatus.textContent = "¡Gracias! Tu reseña se publicará en cuanto Sandra la apruebe.";
+      formStatus.textContent = "¡Gracias! Tu reseña ya está publicada.";
     } catch (error) {
       console.error("No se pudo enviar la reseña", error);
       formStatus.textContent = error && error.code === "permission-denied"

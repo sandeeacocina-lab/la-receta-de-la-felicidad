@@ -387,7 +387,7 @@ def recipe_reviews_block(canonical: str, title: str) -> str:
       <span>No rellenes este campo</span>
       <input name="website" type="text" tabindex="-1" autocomplete="off">
     </label>
-    <p class="recipe-review-form__privacy">Publicaremos únicamente tu nombre o alias, la valoración y el comentario después de revisarlos. No te pedimos el correo electrónico.</p>
+    <p class="recipe-review-form__privacy">Publicaremos tu nombre o alias, la valoración y el comentario de forma inmediata. No incluyas datos personales; no te pedimos el correo electrónico.</p>
     <button type="submit" class="recipe-review-form__submit">Enviar reseña</button>
     <p class="recipe-review-form__status" data-review-status role="status" aria-live="polite"></p>
   </form>
