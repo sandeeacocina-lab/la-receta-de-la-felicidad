@@ -45,6 +45,16 @@ CANONICAL_LINK_RE = re.compile(
     r"""<link\b(?=[^>]*\brel\s*=\s*["'][^"']*\bcanonical\b[^"']*["'])[^>]*>""",
     re.IGNORECASE,
 )
+FAVICON_MARKER = "<!-- site-favicon -->"
+FAVICON_LINK_RE = re.compile(
+    r"""\s*<link\b(?=[^>]*\brel\s*=\s*(["'])[^"']*\b(?:icon|apple-touch-icon|apple-touch-icon-precomposed)\b[^"']*\1)[^>]*>""",
+    re.IGNORECASE,
+)
+FAVICON_LINKS = """<!-- site-favicon -->
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-48x48.png" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">"""
 LEGACY_REDIRECTS = {
     "en/2012/09/cheese-mini-donuts.html":
         "en/2012/05/cheese-donuts-breakfast-bars.html",
@@ -614,6 +624,25 @@ def ensure_page_canonical(path: Path, site_root: Path) -> bool:
     return True
 
 
+def ensure_favicon_links(path: Path) -> bool:
+    original = path.read_text(encoding="utf-8")
+    if FAVICON_MARKER in original:
+        return False
+
+    document = FAVICON_LINK_RE.sub("", original)
+    document, replacements = re.subn(
+        r"\s*</head>",
+        "\n" + FAVICON_LINKS + "\n</head>",
+        document,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    if replacements != 1:
+        raise ValueError(f"No se encontró </head> en {path}")
+    path.write_text(document, encoding="utf-8", newline="\n")
+    return True
+
+
 def write_redirect_page(path: Path, target: str, language: str = "es") -> Path:
     redirect = f'''<!doctype html>
 <html lang="{language}">
@@ -622,6 +651,7 @@ def write_redirect_page(path: Path, target: str, language: str = "es") -> Path:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Página trasladada · La Receta de la Felicidad</title>
 <link rel="canonical" href="{html.escape(target, quote=True)}">
+{FAVICON_LINKS}
 <meta http-equiv="refresh" content="0; url={html.escape(target, quote=True)}">
 <script>window.location.replace({json.dumps(target)});</script>
 </head>
@@ -666,6 +696,7 @@ def main() -> int:
     repaired_pages = 0
     content_repairs = 0
     canonical_pages = 0
+    favicon_pages = 0
     recipe_items = 0
     for path in sorted(site_root.rglob("*.html")):
         repair_changed, repair_count = repair_migrated_content(path)
@@ -677,8 +708,11 @@ def main() -> int:
         was_changed, item_count = update_recipe_page(path, site_root)
         canonical_changed = ensure_page_canonical(path, site_root)
         canonical_pages += int(canonical_changed)
+        favicon_changed = ensure_favicon_links(path)
+        favicon_pages += int(favicon_changed)
         changed += int(
             repair_changed or dynamic_changed or was_changed or canonical_changed
+            or favicon_changed
         )
         recipe_items += item_count
     redirect = write_author_redirect(site_root)

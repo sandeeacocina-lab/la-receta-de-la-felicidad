@@ -59,6 +59,7 @@ jobs:
         run: |
           cp analytics.js _site/analytics.js
           cp index-home.html _site/index.html
+          cp favicon.svg favicon.ico favicon-48x48.png apple-touch-icon.png _site/
           python3 generate-missing-recipe-pages.py _site
           mkdir -p _site/wp-content/uploads/2026/07
           base64 --decode site-overrides/mis-otras-webs-happy-cupcakes.webp.b64 > _site/wp-content/uploads/2026/07/mis-otras-webs-happy-cupcakes.webp
@@ -90,6 +91,10 @@ jobs:
         run: |
           python3 seo_fixes.py _site
           test -f _site/sandra-mangas/index.html
+          test -f _site/favicon.ico
+          test -f _site/favicon-48x48.png
+          grep -q 'site-favicon' _site/index.html
+          grep -q 'site-favicon' _site/2013/03/galletas-de-lacasitos.html
           grep -q '"@type": "Recipe"' _site/2016/03/receta-bizcocho-marmolado.html
           grep -q 'data-recipe-id=' _site/2016/03/receta-bizcocho-marmolado.html
           ! grep -R -q 'class="hrecipe' _site --include='*.html'
