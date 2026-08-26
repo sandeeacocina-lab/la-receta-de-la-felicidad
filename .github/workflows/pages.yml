@@ -102,6 +102,14 @@ jobs:
           grep -q 'site-favicon' _site/2013/03/galletas-de-lacasitos.html
           grep -q '"@type": "Recipe"' _site/2016/03/receta-bizcocho-marmolado.html
           grep -q 'data-recipe-id=' _site/2016/03/receta-bizcocho-marmolado.html
+          grep -q '"recipeCategory":' _site/2012/05/chocolate-coulant.html
+          grep -q '"keywords":' _site/2012/05/chocolate-coulant.html
+          grep -q '"recipeCategory":' _site/en/2012/08/strawberries-sangria-in-ice-bowl.html
+          grep -q '"keywords":' _site/en/2012/08/strawberries-sangria-in-ice-bowl.html
+          grep -q '"recipeCategory":' _site/en/2012/10/cheese-pumpkins.html
+          grep -q '"keywords":' _site/en/2012/10/cheese-pumpkins.html
+          grep -q '"recipeCategory":' _site/en/2012/10/autumn-pizza.html
+          grep -q '"keywords":' _site/en/2012/10/autumn-pizza.html
           ! grep -R -q 'class="hrecipe' _site --include='*.html'
 
       - name: Configurar GitHub Pages

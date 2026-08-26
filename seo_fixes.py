@@ -55,6 +55,24 @@ FAVICON_LINKS = """<!-- site-favicon -->
 <link rel="icon" href="/favicon-rf-48x48.png" type="image/png" sizes="48x48">
 <link rel="icon" href="/favicon-rf-512x512.png" type="image/png" sizes="512x512">
 <link rel="apple-touch-icon" href="/apple-touch-icon-rf.png" sizes="180x180">"""
+RECIPE_FALLBACK_METADATA = {
+    "chocolate coulant": (
+        "Dessert",
+        "molten chocolate cake, chocolate lava cake",
+    ),
+    "strawberries sangria in ice bowl": (
+        "Dessert",
+        "strawberry sangria, summer dessert, ice bowl",
+    ),
+    "cheese pumpkins": (
+        "Appetizer",
+        "Halloween appetizer, cheese pumpkins, savory snack",
+    ),
+    "autumn pizza": (
+        "Main course",
+        "autumn pizza, seasonal pizza, homemade pizza",
+    ),
+}
 LEGACY_REDIRECTS = {
     "en/2012/09/cheese-mini-donuts.html":
         "en/2012/05/cheese-donuts-breakfast-bars.html",
@@ -117,6 +135,16 @@ DYNAMIC_LINK_HELPER = f"""<script {DYNAMIC_LINK_MARKER}>
 
 def clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(value)).strip()
+
+
+def fallback_recipe_metadata(name: str, canonical: str) -> tuple[str, str]:
+    """Supply useful metadata when a migrated post has no legacy categories."""
+    known = RECIPE_FALLBACK_METADATA.get(clean_text(name).casefold())
+    if known:
+        return known
+
+    is_english = urlparse(canonical).path.lower().startswith("/en/")
+    return ("Other" if is_english else "Otros", clean_text(name))
 
 
 ISO_8601_DURATION_RE = re.compile(
@@ -498,6 +526,10 @@ def recipe_jsonld(parser: RecipeHTMLParser, canonical: str) -> list[dict]:
         if categories:
             recipe["keywords"] = ", ".join(categories)
             recipe["recipeCategory"] = categories
+        else:
+            category, keywords = fallback_recipe_metadata(name, canonical)
+            recipe["keywords"] = keywords
+            recipe["recipeCategory"] = [category]
         if record.recipe_yield:
             recipe["recipeYield"] = record.recipe_yield
         prep_time = normalize_duration(record.prep_time)
